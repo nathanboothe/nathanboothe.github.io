@@ -1647,6 +1647,8 @@
 
       const sectionsData = await Promise.all(topLevel.map(buildNode));
 
+      console.log("Raindrop collection tree:", sectionsData);
+
       renderSections(sectionsData);
 
     } catch (err) {
