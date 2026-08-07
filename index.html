@@ -402,22 +402,8 @@
       grid-template-rows: 0fr;
       opacity: 0;
     }
-    .link-grid-wrap > .section-inner {
+    .link-grid-wrap > .link-grid {
       overflow: hidden;
-    }
-
-    .subsection-container {
-      margin-top: 10px;
-    }
-
-    .subsection {
-      padding-left: 22px;
-      border-left: 1px solid #2d3748;
-      margin-bottom: 10px;
-    }
-
-    .subsection .section-title {
-      font-size: 10px;
     }
 
     .link-grid {
@@ -924,51 +910,33 @@
   updateGreeting();
   setInterval(updateGreeting, 60000);
 
-  // --- Hidden sections (keyed by collection ID, so nested collections that
-  // happen to share a name never collide) ---
+  // --- Hidden sections ---
   function getHiddenSections() {
-    try {
-      const raw = JSON.parse(localStorage.getItem("rd_hidden_sections") || "[]");
-      // Back-compat: earlier version stored plain title strings.
-      return raw.map(h => typeof h === "string" ? { id: h, title: h } : h);
-    } catch { return []; }
+    try { return JSON.parse(localStorage.getItem("rd_hidden_sections") || "[]"); }
+    catch { return []; }
   }
   function setHiddenSections(arr) {
     localStorage.setItem("rd_hidden_sections", JSON.stringify(arr));
   }
-  function hideSection(id, title) {
+  function hideSection(title) {
     const hidden = getHiddenSections();
-    if (!hidden.find(h => h.id === id)) { hidden.push({ id, title }); setHiddenSections(hidden); }
+    if (!hidden.includes(title)) { hidden.push(title); setHiddenSections(hidden); }
   }
-  function unhideSection(id) {
-    setHiddenSections(getHiddenSections().filter(h => h.id !== id));
+  function unhideSection(title) {
+    setHiddenSections(getHiddenSections().filter(t => t !== title));
   }
 
   // --- Bookmark filter ---
   document.getElementById("filterInput").addEventListener("input", e => {
     const q = e.target.value.toLowerCase().trim();
-
-    const depthOf = el => {
-      let d = 0, p = el.parentElement;
-      while (p) { if (p.classList && p.classList.contains("section")) d++; p = p.parentElement; }
-      return d;
-    };
-
-    // Process deepest (most nested) sections first, so a parent's visibility
-    // can take its children's visibility into account.
-    const sections = [...document.querySelectorAll("#main .section")]
-      .sort((a, b) => depthOf(b) - depthOf(a));
-
-    sections.forEach(sec => {
-      let ownVisible = 0;
-      sec.querySelectorAll(":scope > .link-grid-wrap > .section-inner > .link-grid > .link-card").forEach(card => {
+    document.querySelectorAll("#main .section").forEach(sec => {
+      let visible = 0;
+      sec.querySelectorAll(".link-card").forEach(card => {
         const match = !q || card.textContent.toLowerCase().includes(q);
         card.style.display = match ? "" : "none";
-        if (match) ownVisible++;
+        if (match) visible++;
       });
-      const childVisible = [...sec.querySelectorAll(":scope > .link-grid-wrap > .section-inner > .subsection-container > .section")]
-        .some(child => child.style.display !== "none");
-      sec.style.display = (q && ownVisible === 0 && !childVisible) ? "none" : "";
+      sec.style.display = visible === 0 && q ? "none" : "";
     });
   });
 
@@ -1375,10 +1343,10 @@
     if (hidden.length === 0) {
       listEl.innerHTML = `<span style="color:var(--text-muted)">${t("noHiddenSections")}</span>`;
     } else {
-      listEl.innerHTML = hidden.map(h => `
+      listEl.innerHTML = hidden.map(t => `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #2d3748">
-          <span>${h.title}</span>
-          <button onclick="unhideSection('${h.id.replace(/'/g,"\\'")}');this.closest('.setup-box').dispatchEvent(new Event('refresh-hidden'))"
+          <span>${t}</span>
+          <button onclick="unhideSection('${t.replace(/'/g,"\\'")}');this.closest('.setup-box').dispatchEvent(new Event('refresh-hidden'))"
             style="background:none;border:1px solid #334155;border-radius:6px;color:#94a3b8;padding:2px 10px;cursor:pointer;font-size:12px">
             ${t("restore")}
           </button>
@@ -1560,7 +1528,7 @@
     }).join("");
 
     const collapseKey = "rd_collapsed_mest_besogte";
-    const isCollapsed = localStorage.getItem(collapseKey) !== "0"; // default: closed
+    const isCollapsed = localStorage.getItem(collapseKey) === "1";
     if (isCollapsed) el.classList.add("collapsed");
 
     el.innerHTML = `
@@ -1619,35 +1587,23 @@
         return;
       }
 
-      // Byg et id -> children-map, så vi kan følge collection-hierarkiet i vilkårlig dybde
-      // (/collections/childrens returnerer alle under-collections fladt, med parent.$id)
-      const childrenMap = {};
-      allCollections.forEach(c => {
-        if (c.parent && c.parent.$id) {
-          (childrenMap[c.parent.$id] = childrenMap[c.parent.$id] || []).push(c);
-        }
-      });
-      Object.values(childrenMap).forEach(arr => arr.sort((a, b) => a.sort - b.sort));
+      // Find alle child collections under StartPage — sorter efter Raindrop's sort-felt
+      const children = allCollections
+        .filter(c => c.parent && c.parent.$id === parent._id)
+        .sort((a, b) => a.sort - b.sort);
 
-      const topLevel = childrenMap[parent._id] || [];
-
-      if (topLevel.length === 0) {
+      if (children.length === 0) {
         main.innerHTML = `<div class="status error">${t("noChildCollections", parentName)}</div>`;
         return;
       }
 
-      // Hent raindrops for hver collection i træet, rekursivt og i vilkårlig dybde —
-      // sort=-sort matcher drag-and-drop rækkefølge i Raindrop
-      async function buildNode(col) {
-        const data = await rdFetch(`/raindrops/${col._id}?perpage=250&sort=-sort`);
-        const kids = childrenMap[col._id] || [];
-        const children = await Promise.all(kids.map(buildNode));
-        return { id: col._id, title: col.title, items: data.items || [], children };
-      }
-
-      const sectionsData = await Promise.all(topLevel.map(buildNode));
-
-      console.log("Raindrop collection tree:", sectionsData);
+      // Hent raindrops for hvert barn parallelt — sort=-sort matcher drag-and-drop rækkefølge i Raindrop
+      const sectionsData = await Promise.all(
+        children.map(async col => {
+          const data = await rdFetch(`/raindrops/${col._id}?perpage=250&sort=-sort`);
+          return { title: col.title, items: data.items || [] };
+        })
+      );
 
       renderSections(sectionsData);
 
@@ -1676,91 +1632,6 @@
     } catch { return ""; }
   }
 
-  function buildLinkCardsHtml(items) {
-    return items.map(item => {
-      const domain = getDomain(item.link);
-      const favicon = item.domain
-        ? `https://www.google.com/s2/favicons?sz=32&domain=${item.domain}`
-        : getFaviconUrl(item.link);
-
-      return `
-        <a class="link-card" href="${item.link}" target="_blank" rel="noopener">
-          <div class="link-icon">
-            <img src="${favicon}" alt=""
-              onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'emoji\\'>🔗</span>'">
-          </div>
-          <div class="link-text">
-            <div class="link-label">${cleanTitle(item.title, domain)}</div>
-            <div class="link-domain">${domain}</div>
-          </div>
-        </a>
-      `;
-    }).join("");
-  }
-
-  // Renders one collection node (its own links + recursively its children,
-  // indented). depth 0 = a top-level section directly under StartPage.
-  function renderCollectionNode(node, depth) {
-    const hidden = getHiddenSections();
-    if (hidden.find(h => h.id === node.id)) return null;
-
-    const el = document.createElement("div");
-    el.className = depth === 0 ? "section" : "section subsection";
-
-    const hasChildren = node.children && node.children.length > 0;
-    const items = buildLinkCardsHtml(node.items);
-    const emptyPlaceholder = (!items && !hasChildren)
-      ? `<div class="link-card" style="color:#64748b;border-style:dashed">${t("emptyCollection")}</div>`
-      : "";
-
-    const collapseKey = `rd_collapsed_${node.id}`;
-    const isCollapsed = localStorage.getItem(collapseKey) !== "0"; // default: closed
-    if (isCollapsed) el.classList.add("collapsed");
-
-    el.innerHTML = `
-      <div class="section-header">
-        <span class="section-chevron">▼</span>
-        <div class="section-title">${node.title}</div>
-        <div class="section-count">${node.items.length}</div>
-        <button class="section-hide-btn" title="Skjul sektion">✕</button>
-      </div>
-      <div class="link-grid-wrap">
-        <div class="section-inner">
-          <div class="link-grid">${items || emptyPlaceholder}</div>
-          <div class="subsection-container"></div>
-        </div>
-      </div>
-    `;
-
-    el.querySelector(".section-header").addEventListener("click", e => {
-      if (e.target.classList.contains("section-hide-btn")) return;
-      const nowCollapsed = el.classList.toggle("collapsed");
-      localStorage.setItem(collapseKey, nowCollapsed ? "1" : "0");
-    });
-
-    el.querySelector(".section-hide-btn").addEventListener("click", () => {
-      hideSection(node.id, node.title);
-      el.remove();
-      showToast(`${t("toastHidden", node.title)} — <u style="cursor:pointer" id="undoHide">${t("toastUndo")}</u>`);
-      setTimeout(() => {
-        document.getElementById("undoHide")?.addEventListener("click", () => {
-          unhideSection(node.id);
-          loadLinks();
-        });
-      }, 50);
-    });
-
-    if (hasChildren) {
-      const childContainer = el.querySelector(".subsection-container");
-      node.children.forEach(child => {
-        const childEl = renderCollectionNode(child, depth + 1);
-        if (childEl) childContainer.appendChild(childEl);
-      });
-    }
-
-    return el;
-  }
-
   function renderSections(sections) {
     const main = document.getElementById("main");
     main.innerHTML = "";
@@ -1768,9 +1639,69 @@
     const mostVisited = renderMostVisited();
     if (mostVisited) main.appendChild(mostVisited);
 
-    sections.forEach(node => {
-      const el = renderCollectionNode(node, 0);
-      if (el) main.appendChild(el);
+    const hidden = getHiddenSections();
+
+    sections.forEach(section => {
+      if (hidden.includes(section.title)) return;
+
+      const el = document.createElement("div");
+      el.className = "section";
+
+      const items = section.items.map(item => {
+        const domain = getDomain(item.link);
+        const favicon = item.domain
+          ? `https://www.google.com/s2/favicons?sz=32&domain=${item.domain}`
+          : getFaviconUrl(item.link);
+
+        return `
+          <a class="link-card" href="${item.link}" target="_blank" rel="noopener">
+            <div class="link-icon">
+              <img src="${favicon}" alt=""
+                onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'emoji\\'>🔗</span>'">
+            </div>
+            <div class="link-text">
+              <div class="link-label">${cleanTitle(item.title, domain)}</div>
+              <div class="link-domain">${domain}</div>
+            </div>
+          </a>
+        `;
+      }).join("");
+
+      const collapseKey = `rd_collapsed_${section.title}`;
+      const isCollapsed = localStorage.getItem(collapseKey) === "1";
+      if (isCollapsed) el.classList.add("collapsed");
+
+      el.innerHTML = `
+        <div class="section-header">
+          <span class="section-chevron">▼</span>
+          <div class="section-title">${section.title}</div>
+          <div class="section-count">${section.items.length}</div>
+          <button class="section-hide-btn" title="Skjul sektion">✕</button>
+        </div>
+        <div class="link-grid-wrap">
+          <div class="link-grid">${items || `<div class="link-card" style="color:#64748b;border-style:dashed">${t("emptyCollection")}</div>`}</div>
+        </div>
+      `;
+
+      el.querySelector(".section-header").addEventListener("click", e => {
+        if (e.target.classList.contains("section-hide-btn")) return;
+        const nowCollapsed = el.classList.toggle("collapsed");
+        localStorage.setItem(collapseKey, nowCollapsed ? "1" : "0");
+      });
+
+      el.querySelector(".section-hide-btn").addEventListener("click", () => {
+        hideSection(section.title);
+        el.remove();
+        showToast(`${t("toastHidden", section.title)} — <u style="cursor:pointer" id="undoHide">${t("toastUndo")}</u>`);
+        setTimeout(() => {
+          document.getElementById("undoHide")?.addEventListener("click", () => {
+            unhideSection(section.title);
+            loadLinks();
+          });
+        }, 50);
+      });
+
+      main.appendChild(el);
     });
 
     // Tidsstempler for opdatering
