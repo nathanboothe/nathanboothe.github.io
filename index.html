@@ -1,0 +1,1720 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Startside</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%230f1117'/><rect x='3' y='3' width='12' height='12' rx='3' fill='%236366f1'/><rect x='17' y='3' width='12' height='12' rx='3' fill='%23818cf8' opacity='.75'/><rect x='3' y='17' width='12' height='12' rx='3' fill='%23818cf8' opacity='.75'/><rect x='17' y='17' width='12' height='12' rx='3' fill='%23a5b4fc' opacity='.5'/></svg>">
+  <meta name="theme-color" content="#0f1117">
+  <meta property="og:title" content="Startside">
+  <meta property="og:description" content="Min personlige startside med links fra Raindrop">
+  <style>
+    :root {
+      --text-primary:   #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted:     #64748b;
+      --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --section-gap: 40px;
+      --tile-width: 200px;
+      --grid-cols: 5;
+      --tile-gap: 10px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font-family);
+      background: #0f1117;
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 24px clamp(24px, 5vw, 120px);
+    }
+
+    /* --- Header --- */
+    header { text-align: center; margin-bottom: 28px; }
+
+    .clock {
+      font-size: 48px;
+      font-weight: 300;
+      letter-spacing: 3px;
+      color: var(--text-primary);
+    }
+
+    .date { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+    .search-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .search-input-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-bar input {
+      width: 480px;
+      padding: 12px 20px;
+      border-radius: 24px;
+      border: 1px solid #334155;
+      background: #1e2533;
+      color: var(--text-primary);
+      font-size: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-bar input:focus { border-color: #6366f1; }
+    .search-bar input::placeholder { color: var(--text-muted); }
+
+    .engine-toggle {
+      display: flex;
+      gap: 6px;
+    }
+
+    .engine-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px 5px 14px;
+      border-radius: 20px;
+      border: 1px solid #334155;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .engine-btn:hover { border-color: #6366f1; color: var(--text-primary); }
+    .engine-btn.active { background: #6366f1; border-color: #6366f1; color: #fff; }
+    .engine-btn.drag-over { border-color: #818cf8; background: #2d3748; }
+    .engine-btn[draggable] { cursor: grab; }
+    .engine-btn[draggable]:active { cursor: grabbing; }
+
+    .engine-open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      font-size: 10px;
+      opacity: 0.5;
+      transition: opacity 0.15s, background 0.15s;
+      text-decoration: none;
+      color: inherit;
+    }
+    .engine-btn:hover .engine-open,
+    .engine-btn.active .engine-open { opacity: 1; }
+    .engine-open:hover { background: rgba(255,255,255,0.2); opacity: 1; }
+
+    /* --- Settings button --- */
+    .settings-btn {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: #1e2533;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 13px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .settings-btn:hover { border-color: #6366f1; color: var(--text-primary); }
+
+    .refresh-btn {
+      position: fixed;
+      top: 16px;
+      right: 120px;
+      background: #1e2533;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 13px;
+      transition: border-color 0.2s, color 0.2s, transform 0.4s;
+    }
+    .refresh-btn:hover { border-color: #6366f1; color: var(--text-primary); }
+    .refresh-btn.spinning { transform: rotate(360deg); }
+
+    /* --- Setup overlay --- */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .overlay.visible { display: flex; }
+
+    .setup-box {
+      background: #1e2533;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 32px;
+      width: 460px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .setup-box h2 { font-size: 18px; margin-bottom: 8px; }
+    .setup-box p { font-size: 13px; color: #94a3b8; margin-bottom: 24px; line-height: 1.6; }
+    .setup-box label { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px; }
+
+    .setup-box input[type="text"] {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f1117;
+      color: #e2e8f0;
+      font-size: 14px;
+      font-family: monospace;
+      outline: none;
+      margin-bottom: 16px;
+    }
+    .setup-box input[type="text"]:focus { border-color: #6366f1; }
+
+    .setup-box .row { display: flex; gap: 10px; margin-top: 8px; }
+
+    /* --- Font picker --- */
+    .font-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .font-chip {
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: 1px solid #334155;
+      background: transparent;
+      color: #94a3b8;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .font-chip:hover { border-color: #6366f1; color: #e2e8f0; }
+    .font-chip.selected { background: #6366f1; border-color: #6366f1; color: #fff; }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn-primary { background: #6366f1; color: #fff; }
+    .btn-ghost { background: #2d3748; color: #e2e8f0; }
+
+    .setup-divider {
+      border: none;
+      border-top: 1px solid #2d3748;
+      margin: 20px 0 16px;
+    }
+
+    .swatch-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: transform 0.15s, border-color 0.15s;
+      position: relative;
+    }
+    .swatch:hover { transform: scale(1.1); }
+    .swatch.selected { border-color: #6366f1; }
+    .swatch.selected::after {
+      content: "✓";
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: #fff;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .color-row input[type="color"] {
+      width: 36px;
+      height: 36px;
+      border: 2px solid #334155;
+      border-radius: 8px;
+      background: none;
+      cursor: pointer;
+      padding: 2px;
+    }
+    .color-row span { font-size: 12px; color: #64748b; }
+
+    /* --- Background overlay for images --- */
+    #bgOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 0;
+      pointer-events: none;
+    }
+    body.has-bg-image #bgOverlay { display: block; }
+    body.has-bg-image header,
+    body.has-bg-image main { position: relative; z-index: 1; }
+
+    body.has-bg-image .settings-btn { z-index: 101; }
+
+    /* Tekst-skygge når der er baggrundsbillede */
+    body.has-bg-image .clock,
+    body.has-bg-image .date {
+      text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+    }
+    body.has-bg-image .section-title,
+    body.has-bg-image .section-count {
+      text-shadow: 0 1px 6px rgba(0,0,0,0.9);
+    }
+
+    /* Kort: lidt mere opak og frosted-glass effekt */
+    body.has-bg-image .link-card {
+      background: rgba(20,26,40,0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    body.has-bg-image .link-card:hover {
+      background: rgba(30,38,58,0.85);
+    }
+
+    /* --- Pinned links --- */
+    .pinned-section {
+      width: calc(var(--grid-cols) * (var(--tile-width) + var(--tile-gap)) - var(--tile-gap));
+      max-width: 100%;
+      margin: 0 auto 36px;
+    }
+    .pinned-section[hidden] { display: none; }
+    .pinned-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+    .pinned-card {
+      background: #1e2533;
+      border: 1px solid #6366f1;
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-decoration: none;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .pinned-card:hover {
+      background: #262f42;
+      border-color: #818cf8;
+      transform: translateY(-1px);
+    }
+    .pinned-card[hidden] { display: none; }
+    body.has-bg-image .pinned-card {
+      background: rgba(20,26,40,0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    body.has-bg-image .pinned-card:hover { background: rgba(30,38,58,0.85); }
+
+    /* --- Main content --- */
+    main {
+      width: calc(var(--grid-cols) * (var(--tile-width) + var(--tile-gap)) - var(--tile-gap));
+      max-width: 100%;
+      margin: 0 auto;
+    }
+
+    .section { margin-bottom: var(--section-gap); }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      user-select: none;
+      width: fit-content;
+    }
+    .section-header:hover .section-title { color: var(--text-secondary); }
+
+    .section-chevron {
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+      display: inline-block;
+      margin-right: 2px;
+    }
+    .section.collapsed .section-chevron { transform: rotate(-90deg); }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-muted);
+      transition: color 0.15s;
+    }
+
+    .section-count {
+      font-size: 11px;
+      background: #2d3748;
+      color: var(--text-muted);
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+
+    .link-grid-wrap {
+      display: grid;
+      grid-template-rows: 1fr;
+      transition: grid-template-rows 0.25s ease, opacity 0.2s ease;
+      opacity: 1;
+    }
+    .section.collapsed .link-grid-wrap {
+      grid-template-rows: 0fr;
+      opacity: 0;
+    }
+    .link-grid-wrap > .link-grid {
+      overflow: hidden;
+    }
+
+    .link-grid {
+      display: grid;
+      grid-template-columns: repeat(var(--grid-cols), var(--tile-width));
+      gap: var(--tile-gap);
+    }
+
+    .link-card {
+      background: #1e2533;
+      border: 1px solid #2d3748;
+      border-radius: 10px;
+      padding: 14px 16px;
+      text-decoration: none;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: background 0.15s, border-color 0.15s, transform 0.1s;
+    }
+    .link-card:hover {
+      background: #262f42;
+      border-color: #6366f1;
+      transform: translateY(-1px);
+    }
+
+    .link-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: #2d3748;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    .link-icon img { width: 20px; height: 20px; object-fit: contain; }
+    .link-icon .emoji { font-size: 16px; }
+
+    .link-text {
+      min-width: 0;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .link-label {
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .link-domain {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 1px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* --- Status --- */
+    .status {
+      text-align: center;
+      padding: 60px 0;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .status.error { color: #f87171; }
+
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #334155;
+      border-top-color: #6366f1;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeup {
+      from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    /* --- Greeting --- */
+    .greeting {
+      font-size: 15px;
+      color: var(--text-secondary);
+      margin-top: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    /* --- Bookmark filter --- */
+    #filterBar {
+      width: calc(var(--grid-cols) * (var(--tile-width) + var(--tile-gap)) - var(--tile-gap));
+      max-width: 100%;
+      margin: 0 auto 20px;
+    }
+
+    #filterInput {
+      width: 100%;
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #1e2533;
+      color: var(--text-primary);
+      font-size: 13px;
+      font-family: var(--font-family);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    #filterInput:focus { border-color: #6366f1; }
+    #filterInput::placeholder { color: var(--text-muted); }
+
+    /* --- Section hide button --- */
+    .section-hide-btn {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      cursor: pointer;
+      padding: 0 4px;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s;
+      line-height: 1;
+    }
+    .section-header:hover .section-hide-btn { opacity: 1; }
+    .section-hide-btn:hover { color: #f87171; }
+
+    /* --- Keyboard shortcut hint --- */
+    .kbd {
+      display: inline-block;
+      padding: 1px 5px;
+      border: 1px solid #334155;
+      border-radius: 4px;
+      font-size: 10px;
+      color: var(--text-muted);
+      background: #1e2533;
+      font-family: monospace;
+    }
+
+    /* --- Help button --- */
+    .help-btn {
+      position: fixed;
+      top: 16px;
+      right: 170px;
+      background: #1e2533;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 13px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .help-btn:hover { border-color: #6366f1; color: var(--text-primary); }
+
+    /* --- Shortcuts overlay --- */
+    .shortcuts-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+    .shortcuts-overlay.visible { display: flex; }
+    .shortcuts-box {
+      background: #1e2533;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 28px 32px;
+      width: 340px;
+    }
+    .shortcuts-box h2 { font-size: 16px; margin-bottom: 20px; }
+    .shortcut-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 0;
+      border-bottom: 1px solid #2d3748;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .shortcut-row:last-child { border-bottom: none; }
+    .shortcut-keys { display: flex; gap: 4px; }
+
+    /* --- Mest besøgte badge --- */
+    .visit-count {
+      font-size: 10px;
+      color: var(--text-muted);
+      background: #2d3748;
+      border-radius: 10px;
+      padding: 1px 6px;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Refresh button -->
+<button class="refresh-btn" id="refreshBtn" data-i18n-title="refreshTitle" title="Opdater links">↻</button>
+
+<!-- Help button -->
+<button class="help-btn" id="helpBtn" data-i18n-title="helpTitle" title="Tastaturgenveje">?</button>
+
+<!-- Settings button -->
+<button class="settings-btn" id="settingsBtn" data-i18n="settings">Indstillinger</button>
+
+<!-- Setup overlay -->
+<div class="overlay" id="overlay">
+  <div class="setup-box">
+    <h2 data-i18n="settingsTitle">Indstillinger</h2>
+    <p data-i18n-html="settingsDesc">
+      Hent din test-token fra<br>
+      <strong>app.raindrop.io → Settings → Integrations → Create test token</strong><br><br>
+      Tokenen gemmes kun i din browser (localStorage).
+    </p>
+    <label data-i18n="labelName">Dit navn (til velkomsthilsen)</label>
+    <input type="text" id="greetingNameInput" placeholder="fx Gki">
+
+    <label data-i18n="labelToken">API Token</label>
+    <input type="text" id="tokenInput" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+    <label data-i18n="labelCollection">StartPage collection navn</label>
+    <input type="text" id="collectionInput" placeholder="StartPage">
+
+    <hr class="setup-divider">
+    <label data-i18n="labelPinned1">Genvej 1</label>
+    <input type="text" id="pinned1Url"   placeholder="https://intranet.firma.dk">
+    <input type="text" id="pinned1Name"  placeholder="Navn (fx KMC Intranet)">
+    <input type="text" id="pinned1Emoji" placeholder="Emoji (fx 🏢)" style="width:160px;margin-bottom:16px">
+    <label data-i18n="labelPinned2">Genvej 2</label>
+    <input type="text" id="pinned2Url"   placeholder="https://...">
+    <input type="text" id="pinned2Name"  placeholder="Navn">
+    <input type="text" id="pinned2Emoji" placeholder="Emoji (fx 🔗)" style="width:160px;margin-bottom:16px">
+
+    <hr class="setup-divider">
+    <label data-i18n="labelBgColor">Baggrundsfarve</label>
+    <div class="swatch-grid" id="swatchGrid"></div>
+    <div class="color-row">
+      <input type="color" id="customColor" title="Vælg egen farve">
+      <span data-i18n="customColor">Eller vælg en brugerdefineret farve</span>
+    </div>
+
+    <label data-i18n="labelBgImage">Baggrundsbillede</label>
+    <input type="text" id="bgImageInput" placeholder="https://... eller vælg en lokal fil nedenfor" style="margin-bottom:8px">
+    <div class="color-row" style="margin-bottom:0">
+      <label for="bgFileInput" class="btn btn-ghost" style="cursor:pointer;padding:8px 14px;font-size:12px;margin-bottom:0" data-i18n="chooseFile">
+        Vælg fil...
+      </label>
+      <span id="bgFileName" style="font-size:12px;color:#64748b" data-i18n="noFileChosen">Ingen fil valgt</span>
+      <input type="file" id="bgFileInput" accept="image/*" style="display:none">
+    </div>
+
+    <hr class="setup-divider">
+    <label data-i18n="labelFont">Skrifttype</label>
+    <div class="font-grid" id="fontGrid"></div>
+
+    <label data-i18n="labelTextColor">Tekstfarve</label>
+    <div class="color-row" style="margin-bottom:4px">
+      <input type="color" id="textColorPrimary" title="Primær tekst" value="#e2e8f0">
+      <span data-i18n="labelTextPrimary">Primær tekst (overskrifter, links)</span>
+    </div>
+    <div class="color-row" style="margin-bottom:16px">
+      <input type="color" id="textColorSecondary" title="Sekundær tekst" value="#94a3b8">
+      <span data-i18n="labelTextSecondary">Sekundær tekst (dato, domæne)</span>
+    </div>
+
+    <hr class="setup-divider">
+    <label data-i18n="labelSectionGap">Afstand mellem sektioner</label>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <input type="range" id="sectionGapRange" min="8" max="80" step="4" value="40"
+        style="flex:1;accent-color:#6366f1;cursor:pointer">
+      <span id="sectionGapLabel" style="font-size:13px;color:#94a3b8;min-width:36px;text-align:right">40px</span>
+    </div>
+
+    <label data-i18n="labelGridCols">Antal kolonner i bredden</label>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <input type="range" id="gridColsRange" min="2" max="10" step="1" value="5"
+        style="flex:1;accent-color:#6366f1;cursor:pointer">
+      <span id="gridColsLabel" style="font-size:13px;color:#94a3b8;min-width:36px;text-align:right">5</span>
+    </div>
+
+    <label data-i18n="labelTileSize">Tile størrelse</label>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <input type="range" id="tileWidthRange" min="140" max="400" step="10" value="200"
+        style="flex:1;accent-color:#6366f1;cursor:pointer">
+      <span id="tileWidthLabel" style="font-size:13px;color:#94a3b8;min-width:46px;text-align:right">200px</span>
+    </div>
+
+    <hr class="setup-divider">
+    <label data-i18n="labelHiddenSections">Skjulte sektioner</label>
+    <div id="hiddenSectionsList" style="margin-bottom:16px;font-size:13px;color:var(--text-muted)">
+      Ingen skjulte sektioner
+    </div>
+
+    <label data-i18n="labelMostVisited">Mest besøgte</label>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+      <input type="range" id="mostVisitedCountRange" min="3" max="12" step="1" value="6"
+        style="flex:1;accent-color:#6366f1;cursor:pointer">
+      <span id="mostVisitedCountLabel" style="font-size:13px;color:#94a3b8;min-width:24px;text-align:right">6</span>
+    </div>
+    <div style="margin-bottom:16px">
+      <button class="btn btn-ghost" id="resetClicksBtn" style="font-size:12px;padding:7px 14px" data-i18n="resetClicks">Nulstil besøgsstatistik</button>
+    </div>
+
+    <hr class="setup-divider">
+    <label data-i18n="labelLanguage">Sprog</label>
+    <div class="font-grid" style="margin-bottom:16px" id="langGrid">
+      <button class="font-chip lang-chip selected" data-lang="da">Dansk</button>
+      <button class="font-chip lang-chip" data-lang="en">English</button>
+    </div>
+
+    <div class="row">
+      <button class="btn btn-primary" id="saveBtn" data-i18n="save">Gem og indlæs</button>
+      <button class="btn btn-ghost" id="cancelBtn" data-i18n="cancel">Annuller</button>
+    </div>
+  </div>
+</div>
+
+<div id="bgOverlay"></div>
+
+<!-- Shortcuts overlay -->
+<div class="shortcuts-overlay" id="shortcutsOverlay">
+  <div class="shortcuts-box">
+    <h2 data-i18n="shortcutsTitle">Tastaturgenveje</h2>
+    <div class="shortcut-row">
+      <span data-i18n="shortcutSearch">Åbn søgefelt</span>
+      <div class="shortcut-keys"><span class="kbd">/</span></div>
+    </div>
+    <div class="shortcut-row">
+      <span data-i18n="shortcutFilter">Filtrer bookmarks</span>
+      <div class="shortcut-keys"><span class="kbd">f</span></div>
+    </div>
+    <div class="shortcut-row">
+      <span data-i18n="shortcutClose">Luk / ryd</span>
+      <div class="shortcut-keys"><span class="kbd">Esc</span></div>
+    </div>
+    <div class="shortcut-row">
+      <span data-i18n="shortcutEngine">Skift søgemaskine</span>
+      <div class="shortcut-keys"><span class="kbd">1</span>–<span class="kbd">9</span></div>
+    </div>
+    <div class="shortcut-row">
+      <span data-i18n="shortcutHelp">Genveje</span>
+      <div class="shortcut-keys"><span class="kbd">?</span></div>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="clock" id="clock">00:00</div>
+  <div id="greeting" class="greeting"></div>
+  <div class="date" id="date"></div>
+  <div class="search-bar">
+    <div class="search-input-row">
+      <input type="text" placeholder="Søg... ( / )" id="search" data-i18n-placeholder="searchPlaceholder">
+    </div>
+    <div class="engine-toggle" id="engineToggle"></div>
+  </div>
+</header>
+
+<div id="filterBar">
+  <input type="text" id="filterInput" placeholder="Filtrer bookmarks... (f)" data-i18n-placeholder="filterPlaceholder">
+</div>
+
+<div class="pinned-section" id="pinnedSection" hidden>
+  <div class="pinned-grid">
+    <a class="pinned-card" id="pinnedCard1" target="_blank" rel="noopener" hidden>
+      <div class="link-icon"><span class="emoji" id="pinnedEmoji1">🏢</span></div>
+      <div class="link-text">
+        <div class="link-label" id="pinnedName1"></div>
+        <div class="link-domain" id="pinnedDomain1"></div>
+      </div>
+    </a>
+    <a class="pinned-card" id="pinnedCard2" target="_blank" rel="noopener" hidden>
+      <div class="link-icon"><span class="emoji" id="pinnedEmoji2">🔗</span></div>
+      <div class="link-text">
+        <div class="link-label" id="pinnedName2"></div>
+        <div class="link-domain" id="pinnedDomain2"></div>
+      </div>
+    </a>
+  </div>
+</div>
+
+<main id="main">
+  <div class="status" id="status">
+    <span class="spinner"></span> Indlæser...
+  </div>
+</main>
+
+<script>
+  const API = "https://api.raindrop.io/rest/v1";
+
+  // --- Internationalization ---
+  const strings = {
+    da: {
+      settings: "Indstillinger", save: "Gem og indlæs", cancel: "Annuller",
+      restore: "Gendan", resetClicks: "Nulstil besøgsstatistik",
+      searchPlaceholder: "Søg... ( / )", filterPlaceholder: "Filtrer bookmarks... (f)",
+      settingsTitle: "Indstillinger",
+      settingsDesc: "Hent din test-token fra<br><strong>app.raindrop.io → Settings → Integrations → Create test token</strong><br><br>Tokenen gemmes kun i din browser (localStorage).",
+      labelName: "Dit navn (til velkomsthilsen)", labelToken: "API Token",
+      labelCollection: "StartPage collection navn",
+      labelPinned1: "Genvej 1", labelPinned2: "Genvej 2",
+      labelBgColor: "Baggrundsfarve", labelBgImage: "Baggrundsbillede",
+      labelFont: "Skrifttype", labelTextColor: "Tekstfarve",
+      labelTextPrimary: "Primær tekst (overskrifter, links)",
+      labelTextSecondary: "Sekundær tekst (dato, domæne)",
+      labelSectionGap: "Afstand mellem sektioner",
+      labelGridCols: "Antal kolonner i bredden", labelTileSize: "Tile størrelse",
+      labelHiddenSections: "Skjulte sektioner", labelMostVisited: "Mest besøgte",
+      labelMostVisitedCount: "Antal links i Mest besøgte",
+      labelLanguage: "Sprog",
+      noHiddenSections: "Ingen skjulte sektioner",
+      chooseFile: "Vælg fil...", noFileChosen: "Ingen fil valgt",
+      customColor: "Eller vælg en brugerdefineret farve",
+      loading: "Henter collections...",
+      noToken: "Ingen token konfigureret — klik på <strong>Indstillinger</strong> for at komme i gang.",
+      toastHidden: t => `"${t}" skjult`, toastCopied: e => `Kopieret — tryk Ctrl+V i ${e}`,
+      toastResetClicks: "Besøgsstatistik nulstillet", toastUndo: "Fortryd",
+      mostVisited: "Mest besøgte",
+      lastUpdated: t => `Sidst opdateret: ${t}`, emptyCollection: "Tom collection",
+      greetingNight: "God nat", greetingMorning: "God morgen",
+      greetingAfternoon: "God eftermiddag", greetingEvening: "God aften",
+      shortcutsTitle: "Tastaturgenveje", shortcutSearch: "Åbn søgefelt",
+      shortcutFilter: "Filtrer bookmarks", shortcutClose: "Luk / ryd",
+      shortcutEngine: "Skift søgemaskine", shortcutHelp: "Genveje",
+      dateLocale: "da-DK",
+      collectionNotFound: n => `Collection "${n}" ikke fundet. Tjek indstillinger.`,
+      noChildCollections: n => `Ingen under-collections fundet i "${n}".`,
+      apiError: m => `Fejl: ${m}`, alertNoToken: "Indtast venligst en token.",
+      refreshTitle: "Opdater links", helpTitle: "Tastaturgenveje",
+    },
+    en: {
+      settings: "Settings", save: "Save & reload", cancel: "Cancel",
+      restore: "Restore", resetClicks: "Reset visit statistics",
+      searchPlaceholder: "Search... ( / )", filterPlaceholder: "Filter bookmarks... (f)",
+      settingsTitle: "Settings",
+      settingsDesc: "Get your test token from<br><strong>app.raindrop.io → Settings → Integrations → Create test token</strong><br><br>The token is only stored in your browser (localStorage).",
+      labelName: "Your name (for greeting)", labelToken: "API Token",
+      labelCollection: "StartPage collection name",
+      labelPinned1: "Shortcut 1", labelPinned2: "Shortcut 2",
+      labelBgColor: "Background color", labelBgImage: "Background image",
+      labelFont: "Font", labelTextColor: "Text color",
+      labelTextPrimary: "Primary text (headings, links)",
+      labelTextSecondary: "Secondary text (date, domain)",
+      labelSectionGap: "Section spacing",
+      labelGridCols: "Number of columns", labelTileSize: "Tile size",
+      labelHiddenSections: "Hidden sections", labelMostVisited: "Most visited",
+      labelMostVisitedCount: "Number of links in Most visited",
+      labelLanguage: "Language",
+      noHiddenSections: "No hidden sections",
+      chooseFile: "Choose file...", noFileChosen: "No file chosen",
+      customColor: "Or pick a custom color",
+      loading: "Fetching collections...",
+      noToken: "No token configured — click <strong>Settings</strong> to get started.",
+      toastHidden: t => `"${t}" hidden`, toastCopied: e => `Copied — paste with Ctrl+V in ${e}`,
+      toastResetClicks: "Visit statistics reset", toastUndo: "Undo",
+      mostVisited: "Most visited",
+      lastUpdated: t => `Last updated: ${t}`, emptyCollection: "Empty collection",
+      greetingNight: "Good night", greetingMorning: "Good morning",
+      greetingAfternoon: "Good afternoon", greetingEvening: "Good evening",
+      shortcutsTitle: "Keyboard shortcuts", shortcutSearch: "Open search",
+      shortcutFilter: "Filter bookmarks", shortcutClose: "Close / clear",
+      shortcutEngine: "Switch search engine", shortcutHelp: "Shortcuts",
+      dateLocale: "en-GB",
+      collectionNotFound: n => `Collection "${n}" not found. Check settings.`,
+      noChildCollections: n => `No sub-collections found in "${n}".`,
+      apiError: m => `Error: ${m}`, alertNoToken: "Please enter a token.",
+      refreshTitle: "Refresh links", helpTitle: "Keyboard shortcuts",
+    }
+  };
+
+  let currentLang = localStorage.getItem("rd_lang") || "da";
+  function t(key, arg) {
+    const val = strings[currentLang]?.[key] ?? strings.da[key] ?? key;
+    return typeof val === "function" ? val(arg) : val;
+  }
+  function applyLanguage() {
+    document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = t(el.dataset.i18nHtml); });
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+    document.querySelectorAll("[data-i18n-title]").forEach(el => { el.title = t(el.dataset.i18nTitle); });
+    // Language chips
+    document.querySelectorAll(".lang-chip").forEach(chip => {
+      chip.classList.toggle("selected", chip.dataset.lang === currentLang);
+    });
+  }
+
+  // --- Greeting ---
+  function updateGreeting() {
+    const h = new Date().getHours();
+    const name = localStorage.getItem("rd_greeting_name") || "";
+    const text = h < 5 ? t("greetingNight") : h < 12 ? t("greetingMorning") : h < 18 ? t("greetingAfternoon") : h < 23 ? t("greetingEvening") : t("greetingNight");
+    document.getElementById("greeting").textContent = text + (name ? `, ${name}` : "");
+  }
+  updateGreeting();
+  setInterval(updateGreeting, 60000);
+
+  // --- Hidden sections ---
+  function getHiddenSections() {
+    try { return JSON.parse(localStorage.getItem("rd_hidden_sections") || "[]"); }
+    catch { return []; }
+  }
+  function setHiddenSections(arr) {
+    localStorage.setItem("rd_hidden_sections", JSON.stringify(arr));
+  }
+  function hideSection(title) {
+    const hidden = getHiddenSections();
+    if (!hidden.includes(title)) { hidden.push(title); setHiddenSections(hidden); }
+  }
+  function unhideSection(title) {
+    setHiddenSections(getHiddenSections().filter(t => t !== title));
+  }
+
+  // --- Bookmark filter ---
+  document.getElementById("filterInput").addEventListener("input", e => {
+    const q = e.target.value.toLowerCase().trim();
+    document.querySelectorAll("#main .section").forEach(sec => {
+      let visible = 0;
+      sec.querySelectorAll(".link-card").forEach(card => {
+        const match = !q || card.textContent.toLowerCase().includes(q);
+        card.style.display = match ? "" : "none";
+        if (match) visible++;
+      });
+      sec.style.display = visible === 0 && q ? "none" : "";
+    });
+  });
+
+  // --- Keyboard shortcuts ---
+  document.addEventListener("keydown", e => {
+    const inInput = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
+    if (e.key === "/" && !inInput) {
+      e.preventDefault();
+      document.getElementById("search").focus();
+      document.getElementById("search").select();
+    }
+    if ((e.key === "f" || e.key === "F") && !inInput) {
+      e.preventDefault();
+      document.getElementById("filterInput").focus();
+    }
+    if (e.key === "?" && !inInput) {
+      document.getElementById("shortcutsOverlay").classList.toggle("visible");
+    }
+    if (e.key === "Escape") {
+      document.activeElement.blur();
+      const fi = document.getElementById("filterInput");
+      if (fi.value) { fi.value = ""; fi.dispatchEvent(new Event("input")); }
+      document.getElementById("shortcutsOverlay").classList.remove("visible");
+    }
+    // 1-9: skift søgemaskine
+    if (!inInput && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      const idx = parseInt(e.key) - 1;
+      if (!isNaN(idx) && idx >= 0) {
+        const sorted = getSortedEngines();
+        if (idx < sorted.length) {
+          activeEngine = sorted[idx];
+          localStorage.setItem("rd_engine", activeEngine.id);
+          renderEngineButtons();
+        }
+      }
+    }
+  });
+
+  // --- Reset click stats ---
+  document.getElementById("resetClicksBtn").addEventListener("click", () => {
+    localStorage.removeItem("rd_click_counts");
+    localStorage.removeItem("rd_click_data");
+    showToast(t("toastResetClicks"));
+  });
+
+  // --- Language selector ---
+  document.getElementById("langGrid").addEventListener("click", e => {
+    const chip = e.target.closest(".lang-chip");
+    if (!chip) return;
+    currentLang = chip.dataset.lang;
+    localStorage.setItem("rd_lang", currentLang);
+    applyLanguage();
+    updateGreeting();
+    updateClock();
+  });
+
+  // --- Shortcuts overlay ---
+  const shortcutsOverlay = document.getElementById("shortcutsOverlay");
+  document.getElementById("helpBtn").addEventListener("click", () => shortcutsOverlay.classList.toggle("visible"));
+  shortcutsOverlay.addEventListener("click", e => { if (e.target === shortcutsOverlay) shortcutsOverlay.classList.remove("visible"); });
+
+  // --- Storage helpers ---
+  const getToken = () => localStorage.getItem("rd_token") || "";
+  const getParentName = () => localStorage.getItem("rd_parent") || "StartPage";
+  const setToken = t => localStorage.setItem("rd_token", t);
+  const setParentName = n => localStorage.setItem("rd_parent", n);
+
+  // --- Background ---
+  const bgPresets = [
+    { color: "#0f1117", label: "Standard" },
+    { color: "#0d1b2a", label: "Nat blå" },
+    { color: "#1a0a2e", label: "Lilla" },
+    { color: "#0a1f0a", label: "Skov" },
+    { color: "#1a1008", label: "Varm" },
+    { color: "#1a0808", label: "Rød" },
+    { color: "#08181a", label: "Petroleum" },
+    { color: "#111111", label: "Sort" },
+  ];
+
+  function applyBackground() {
+    const type  = localStorage.getItem("rd_bg_type")  || "color";
+    const value = localStorage.getItem("rd_bg_value") || "#0f1117";
+    if (type === "image") {
+      document.body.style.background = `url('${value}') center/cover no-repeat fixed`;
+      document.body.classList.add("has-bg-image");
+    } else {
+      document.body.style.background = value;
+      document.body.classList.remove("has-bg-image");
+    }
+  }
+
+  function renderSwatches() {
+    const grid = document.getElementById("swatchGrid");
+    const current = localStorage.getItem("rd_bg_value") || "#0f1117";
+    grid.innerHTML = "";
+    bgPresets.forEach(p => {
+      const s = document.createElement("div");
+      s.className = "swatch" + (p.color === current ? " selected" : "");
+      s.style.background = p.color;
+      s.title = p.label;
+      s.addEventListener("click", () => {
+        document.getElementById("bgImageInput").value = "";
+        document.getElementById("customColor").value = p.color;
+        grid.querySelectorAll(".swatch").forEach(x => x.classList.remove("selected"));
+        s.classList.add("selected");
+      });
+      grid.appendChild(s);
+    });
+  }
+
+  document.getElementById("customColor").addEventListener("input", () => {
+    document.getElementById("bgImageInput").value = "";
+    document.getElementById("bgFileName").textContent = "Ingen fil valgt";
+    document.getElementById("swatchGrid").querySelectorAll(".swatch").forEach(x => x.classList.remove("selected"));
+  });
+
+  document.getElementById("bgImageInput").addEventListener("input", () => {
+    document.getElementById("bgFileName").textContent = "Ingen fil valgt";
+  });
+
+  document.getElementById("bgFileInput").addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      document.getElementById("bgImageInput").value = ev.target.result; // data URL
+      document.getElementById("bgFileName").textContent = file.name;
+    };
+    reader.readAsDataURL(file);
+  });
+
+  applyBackground();
+
+  // --- Antal kolonner ---
+  function applyGridCols() {
+    const cols = localStorage.getItem("rd_grid_cols") || "5";
+    document.documentElement.style.setProperty("--grid-cols", cols);
+  }
+
+  document.getElementById("gridColsRange").addEventListener("input", e => {
+    document.getElementById("gridColsLabel").textContent = e.target.value;
+    document.documentElement.style.setProperty("--grid-cols", e.target.value);
+  });
+
+  applyGridCols();
+
+  // --- Tile størrelse ---
+  function applyTileWidth() {
+    const w = localStorage.getItem("rd_tile_width") || "200";
+    document.documentElement.style.setProperty("--tile-width", w + "px");
+  }
+
+  document.getElementById("tileWidthRange").addEventListener("input", e => {
+    document.getElementById("tileWidthLabel").textContent = e.target.value + "px";
+    document.documentElement.style.setProperty("--tile-width", e.target.value + "px");
+  });
+
+  applyTileWidth();
+
+  document.getElementById("mostVisitedCountRange").addEventListener("input", e => {
+    document.getElementById("mostVisitedCountLabel").textContent = e.target.value;
+  });
+
+  // --- Section gap ---
+  function applySectionGap() {
+    const gap = localStorage.getItem("rd_section_gap") || "40";
+    document.documentElement.style.setProperty("--section-gap", gap + "px");
+  }
+
+  document.getElementById("sectionGapRange").addEventListener("input", e => {
+    document.getElementById("sectionGapLabel").textContent = e.target.value + "px";
+    document.documentElement.style.setProperty("--section-gap", e.target.value + "px");
+  });
+
+  applySectionGap();
+
+  // --- Pinned links ---
+  function applyPinned() {
+    const links = [
+      { url: localStorage.getItem("rd_pinned1_url") || "", name: localStorage.getItem("rd_pinned1_name") || "", emoji: localStorage.getItem("rd_pinned1_emoji") || "🏢", cardId: "pinnedCard1", nameId: "pinnedName1", domainId: "pinnedDomain1", emojiId: "pinnedEmoji1" },
+      { url: localStorage.getItem("rd_pinned2_url") || "", name: localStorage.getItem("rd_pinned2_name") || "", emoji: localStorage.getItem("rd_pinned2_emoji") || "🔗", cardId: "pinnedCard2", nameId: "pinnedName2", domainId: "pinnedDomain2", emojiId: "pinnedEmoji2" },
+    ];
+    let anyVisible = false;
+    links.forEach(l => {
+      const card = document.getElementById(l.cardId);
+      if (!l.url) { card.hidden = true; return; }
+      card.hidden = false;
+      card.href = l.url;
+      document.getElementById(l.emojiId).textContent = l.emoji || (l.cardId === "pinnedCard1" ? "🏢" : "🔗");
+      document.getElementById(l.nameId).textContent = l.name || l.url;
+      try { document.getElementById(l.domainId).textContent = new URL(l.url).hostname.replace("www.", ""); }
+      catch { document.getElementById(l.domainId).textContent = ""; }
+      anyVisible = true;
+    });
+    document.getElementById("pinnedSection").hidden = !anyVisible;
+  }
+
+  applyPinned();
+
+  // --- Font & Text color ---
+  const fontOptions = [
+    { label: "System",      value: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" },
+    { label: "Inter",       value: "'Inter', sans-serif",          google: "Inter" },
+    { label: "Roboto",      value: "'Roboto', sans-serif",         google: "Roboto" },
+    { label: "Lato",        value: "'Lato', sans-serif",           google: "Lato" },
+    { label: "Open Sans",   value: "'Open Sans', sans-serif",      google: "Open+Sans" },
+    { label: "Nunito",      value: "'Nunito', sans-serif",         google: "Nunito" },
+    { label: "Merriweather",value: "'Merriweather', serif",        google: "Merriweather" },
+    { label: "Source Code", value: "'Source Code Pro', monospace", google: "Source+Code+Pro" },
+  ];
+
+  function loadGoogleFont(googleName) {
+    if (!googleName) return;
+    const id = `gf-${googleName}`;
+    if (document.getElementById(id)) return;
+    const link = document.createElement("link");
+    link.id   = id;
+    link.rel  = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${googleName}:wght@300;400;500;600&display=swap`;
+    document.head.appendChild(link);
+  }
+
+  function applyTypography() {
+    const font      = localStorage.getItem("rd_font")            || fontOptions[0].value;
+    const primary   = localStorage.getItem("rd_text_primary")   || "#e2e8f0";
+    const secondary = localStorage.getItem("rd_text_secondary") || "#94a3b8";
+
+    document.documentElement.style.setProperty("--font-family",    font);
+    document.documentElement.style.setProperty("--text-primary",   primary);
+    document.documentElement.style.setProperty("--text-secondary", secondary);
+    document.documentElement.style.setProperty("--text-muted",     secondary); // muted følger secondary
+
+    // Load Google Font if needed
+    const match = fontOptions.find(f => f.value === font);
+    if (match && match.google) loadGoogleFont(match.google);
+  }
+
+  function renderFontGrid() {
+    const grid    = document.getElementById("fontGrid");
+    const current = localStorage.getItem("rd_font") || fontOptions[0].value;
+    grid.innerHTML = "";
+    fontOptions.forEach(f => {
+      const chip = document.createElement("button");
+      chip.className = "font-chip" + (f.value === current ? " selected" : "");
+      chip.textContent = f.label;
+      chip.style.fontFamily = f.value;
+      if (f.google) loadGoogleFont(f.google); // pre-load so preview shows immediately
+      chip.addEventListener("click", () => {
+        grid.querySelectorAll(".font-chip").forEach(c => c.classList.remove("selected"));
+        chip.classList.add("selected");
+      });
+      grid.appendChild(chip);
+    });
+  }
+
+  applyTypography();
+
+  // --- Clock ---
+  function updateClock() {
+    const now = new Date();
+    document.getElementById("clock").textContent =
+      now.toLocaleTimeString(t("dateLocale"), { hour: "2-digit", minute: "2-digit" });
+    document.getElementById("date").textContent =
+      now.toLocaleDateString(t("dateLocale"), { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // --- Search engines ---
+  // url: direct query in URL | clipboard: copy text, open page
+  const engines = [
+    { id: "google",  label: "Google",  homeUrl: "https://www.google.com",       url: q => `https://www.google.com/search?q=${encodeURIComponent(q)}` },
+    { id: "bing",    label: "Bing",    homeUrl: "https://www.bing.com",          url: q => `https://www.bing.com/search?q=${encodeURIComponent(q)}` },
+    { id: "copilot", label: "Copilot", homeUrl: "https://m365.cloud.microsoft/chat", clipboard: true, url: () => "https://m365.cloud.microsoft/chat" },
+    { id: "chatgpt", label: "ChatGPT", homeUrl: "https://chatgpt.com",           clipboard: true, url: () => "https://chatgpt.com/" },
+    { id: "claude",  label: "Claude",  homeUrl: "https://claude.ai",             clipboard: true, url: () => "https://claude.ai/new" },
+  ];
+
+  const savedEngineId = localStorage.getItem("rd_engine") || engines[0].id;
+  let activeEngine = engines.find(e => e.id === savedEngineId) || engines[0];
+
+  // Sorter engines efter gemt rækkefølge
+  function getSortedEngines() {
+    const saved = localStorage.getItem("rd_engine_order");
+    if (!saved) return engines;
+    try {
+      const order = JSON.parse(saved);
+      return [...engines].sort((a, b) => {
+        const ai = order.indexOf(a.id), bi = order.indexOf(b.id);
+        return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+      });
+    } catch { return engines; }
+  }
+
+  function saveEngineOrder() {
+    const ids = [...toggleEl.querySelectorAll(".engine-btn")].map(b => b.dataset.id);
+    localStorage.setItem("rd_engine_order", JSON.stringify(ids));
+  }
+
+  // Render engine buttons
+  const toggleEl = document.getElementById("engineToggle");
+  let dragSrc = null;
+
+  function renderEngineButtons() {
+    toggleEl.innerHTML = "";
+    getSortedEngines().forEach(eng => {
+      const btn = document.createElement("button");
+      btn.className = "engine-btn" + (eng.id === activeEngine.id ? " active" : "");
+      btn.dataset.id = eng.id;
+      btn.draggable = true;
+      btn.innerHTML = `<span>${eng.label}</span><a class="engine-open" href="${eng.homeUrl}" target="_blank" rel="noopener" title="Åbn ${eng.label}">↗</a>`;
+
+      btn.querySelector(".engine-open").addEventListener("click", e => e.stopPropagation());
+
+      btn.addEventListener("click", async () => {
+        const q = document.getElementById("search").value.trim();
+        if (q) {
+          await doSearch(eng, q);
+        } else {
+          activeEngine = eng;
+          localStorage.setItem("rd_engine", eng.id);
+          toggleEl.querySelectorAll(".engine-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          document.getElementById("search").focus();
+        }
+      });
+
+      // Drag-and-drop
+      btn.addEventListener("dragstart", e => {
+        dragSrc = btn;
+        e.dataTransfer.effectAllowed = "move";
+        setTimeout(() => btn.style.opacity = "0.4", 0);
+      });
+      btn.addEventListener("dragend", () => {
+        btn.style.opacity = "";
+        toggleEl.querySelectorAll(".engine-btn").forEach(b => b.classList.remove("drag-over"));
+      });
+      btn.addEventListener("dragover", e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        if (btn !== dragSrc) {
+          toggleEl.querySelectorAll(".engine-btn").forEach(b => b.classList.remove("drag-over"));
+          btn.classList.add("drag-over");
+        }
+      });
+      btn.addEventListener("drop", e => {
+        e.preventDefault();
+        if (dragSrc && dragSrc !== btn) {
+          const btns = [...toggleEl.querySelectorAll(".engine-btn")];
+          const fromIdx = btns.indexOf(dragSrc);
+          const toIdx   = btns.indexOf(btn);
+          if (fromIdx < toIdx) btn.after(dragSrc);
+          else btn.before(dragSrc);
+          saveEngineOrder();
+        }
+        btn.classList.remove("drag-over");
+      });
+
+      toggleEl.appendChild(btn);
+    });
+  }
+
+  renderEngineButtons();
+
+  async function doSearch(eng, q) {
+    if (eng.clipboard) {
+      await navigator.clipboard.writeText(q);
+      showToast(t("toastCopied", eng.label));
+    }
+    window.open(eng.url(q), "_blank");
+  }
+
+  document.getElementById("search").addEventListener("keydown", async e => {
+    if (e.key === "Enter") {
+      const q = e.target.value.trim();
+      if (q) await doSearch(activeEngine, q);
+    }
+  });
+
+  function showToast(msg) {
+    const t = document.createElement("div");
+    t.textContent = msg;
+    t.style.cssText = `
+      position:fixed; bottom:32px; left:50%; transform:translateX(-50%);
+      background:#6366f1; color:#fff; padding:10px 20px; border-radius:8px;
+      font-size:13px; font-weight:500; z-index:200;
+      animation: fadeup 0.2s ease;
+    `;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  // --- Settings overlay ---
+  const overlay = document.getElementById("overlay");
+
+  function openSettings() {
+    document.getElementById("greetingNameInput").value = localStorage.getItem("rd_greeting_name") || "";
+    document.getElementById("tokenInput").value = getToken();
+    document.getElementById("collectionInput").value = getParentName();
+
+    // Skjulte sektioner
+    const hidden = getHiddenSections();
+    const listEl = document.getElementById("hiddenSectionsList");
+    if (hidden.length === 0) {
+      listEl.innerHTML = `<span style="color:var(--text-muted)">${t("noHiddenSections")}</span>`;
+    } else {
+      listEl.innerHTML = hidden.map(t => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #2d3748">
+          <span>${t}</span>
+          <button onclick="unhideSection('${t.replace(/'/g,"\\'")}');this.closest('.setup-box').dispatchEvent(new Event('refresh-hidden'))"
+            style="background:none;border:1px solid #334155;border-radius:6px;color:#94a3b8;padding:2px 10px;cursor:pointer;font-size:12px">
+            ${t("restore")}
+          </button>
+        </div>`).join("");
+    }
+
+    const bgType  = localStorage.getItem("rd_bg_type")  || "color";
+    const bgValue = localStorage.getItem("rd_bg_value") || "#0f1117";
+    document.getElementById("customColor").value  = bgType === "color" ? bgValue : "#0f1117";
+    document.getElementById("bgImageInput").value = bgType === "image" ? bgValue : "";
+    renderSwatches();
+
+    // Pinned links
+    document.getElementById("pinned1Url").value   = localStorage.getItem("rd_pinned1_url")   || "";
+    document.getElementById("pinned1Name").value  = localStorage.getItem("rd_pinned1_name")  || "";
+    document.getElementById("pinned1Emoji").value = localStorage.getItem("rd_pinned1_emoji") || "";
+    document.getElementById("pinned2Url").value   = localStorage.getItem("rd_pinned2_url")   || "";
+    document.getElementById("pinned2Name").value  = localStorage.getItem("rd_pinned2_name")  || "";
+    document.getElementById("pinned2Emoji").value = localStorage.getItem("rd_pinned2_emoji") || "";
+
+    // Font & text colors
+    renderFontGrid();
+    document.getElementById("textColorPrimary").value   = localStorage.getItem("rd_text_primary")   || "#e2e8f0";
+    document.getElementById("textColorSecondary").value = localStorage.getItem("rd_text_secondary") || "#94a3b8";
+
+    // Section gap
+    const savedGap = localStorage.getItem("rd_section_gap") || "40";
+    document.getElementById("sectionGapRange").value = savedGap;
+    document.getElementById("sectionGapLabel").textContent = savedGap + "px";
+
+    // Kolonner
+    const savedCols = localStorage.getItem("rd_grid_cols") || "5";
+    document.getElementById("gridColsRange").value = savedCols;
+    document.getElementById("gridColsLabel").textContent = savedCols;
+
+    // Tile størrelse
+    const savedTileW = localStorage.getItem("rd_tile_width") || "200";
+    document.getElementById("tileWidthRange").value = savedTileW;
+    document.getElementById("tileWidthLabel").textContent = savedTileW + "px";
+
+    // Mest besøgte antal
+    const savedMVC = localStorage.getItem("rd_most_visited_count") || "6";
+    document.getElementById("mostVisitedCountRange").value = savedMVC;
+    document.getElementById("mostVisitedCountLabel").textContent = savedMVC;
+
+    overlay.classList.add("visible");
+  }
+
+  document.getElementById("settingsBtn").addEventListener("click", openSettings);
+  document.getElementById("cancelBtn").addEventListener("click", () => overlay.classList.remove("visible"));
+  overlay.addEventListener("click", e => { if (e.target === overlay) overlay.classList.remove("visible"); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") overlay.classList.remove("visible"); });
+
+  document.getElementById("refreshBtn").addEventListener("click", () => {
+    const btn = document.getElementById("refreshBtn");
+    btn.classList.add("spinning");
+    setTimeout(() => btn.classList.remove("spinning"), 400);
+    loadLinks();
+  });
+
+  // Gendan skjult sektion fra settings-listen
+  document.querySelector(".setup-box").addEventListener("refresh-hidden", () => openSettings());
+
+  document.getElementById("saveBtn").addEventListener("click", () => {
+    localStorage.setItem("rd_greeting_name", document.getElementById("greetingNameInput").value.trim());
+    updateGreeting();
+
+    const token = document.getElementById("tokenInput").value.trim();
+    const parent = document.getElementById("collectionInput").value.trim() || "StartPage";
+    if (!token) return alert(t("alertNoToken"));
+    setToken(token);
+    setParentName(parent);
+
+    // Gem baggrund
+    const imgUrl = document.getElementById("bgImageInput").value.trim();
+    if (imgUrl) {
+      localStorage.setItem("rd_bg_type",  "image");
+      localStorage.setItem("rd_bg_value", imgUrl);
+    } else {
+      localStorage.setItem("rd_bg_type",  "color");
+      localStorage.setItem("rd_bg_value", document.getElementById("customColor").value);
+    }
+    applyBackground();
+
+    // Gem pinned links
+    localStorage.setItem("rd_pinned1_url",   document.getElementById("pinned1Url").value.trim());
+    localStorage.setItem("rd_pinned1_name",  document.getElementById("pinned1Name").value.trim());
+    localStorage.setItem("rd_pinned1_emoji", document.getElementById("pinned1Emoji").value.trim());
+    localStorage.setItem("rd_pinned2_url",   document.getElementById("pinned2Url").value.trim());
+    localStorage.setItem("rd_pinned2_name",  document.getElementById("pinned2Name").value.trim());
+    localStorage.setItem("rd_pinned2_emoji", document.getElementById("pinned2Emoji").value.trim());
+    applyPinned();
+
+    // Gem font
+    const selectedChip = document.querySelector("#fontGrid .font-chip.selected");
+    if (selectedChip) {
+      const fontMatch = fontOptions.find(f => f.label === selectedChip.textContent);
+      if (fontMatch) localStorage.setItem("rd_font", fontMatch.value);
+    }
+
+    // Gem tekstfarver
+    localStorage.setItem("rd_text_primary",   document.getElementById("textColorPrimary").value);
+    localStorage.setItem("rd_text_secondary", document.getElementById("textColorSecondary").value);
+
+    applyTypography();
+
+    // Gem section gap
+    localStorage.setItem("rd_section_gap", document.getElementById("sectionGapRange").value);
+    applySectionGap();
+
+    localStorage.setItem("rd_grid_cols", document.getElementById("gridColsRange").value);
+    applyGridCols();
+
+    localStorage.setItem("rd_tile_width", document.getElementById("tileWidthRange").value);
+    applyTileWidth();
+
+    localStorage.setItem("rd_most_visited_count", document.getElementById("mostVisitedCountRange").value);
+
+    overlay.classList.remove("visible");
+    loadLinks();
+  });
+
+  // --- Click tracking ---
+  function getClickCounts() {
+    try { return JSON.parse(localStorage.getItem("rd_click_counts") || "{}"); }
+    catch { return {}; }
+  }
+  function getClickData() {
+    try { return JSON.parse(localStorage.getItem("rd_click_data") || "{}"); }
+    catch { return {}; }
+  }
+  function trackClick(url, title, domain, favicon) {
+    const counts = getClickCounts();
+    counts[url] = (counts[url] || 0) + 1;
+    localStorage.setItem("rd_click_counts", JSON.stringify(counts));
+    const data = getClickData();
+    data[url] = { title, domain, favicon };
+    localStorage.setItem("rd_click_data", JSON.stringify(data));
+  }
+
+  // Event delegation — track all link-card clicks in #main
+  document.getElementById("main").addEventListener("click", e => {
+    const card = e.target.closest(".link-card");
+    if (!card || !card.href) return;
+    const title = card.querySelector(".link-label")?.textContent || "";
+    const domain = card.querySelector(".link-domain")?.textContent || "";
+    const img = card.querySelector(".link-icon img");
+    const favicon = img ? img.src : "";
+    trackClick(card.href, title, domain, favicon);
+  });
+
+  function renderMostVisited() {
+    const counts = getClickCounts();
+    const data = getClickData();
+    const maxCount = parseInt(localStorage.getItem("rd_most_visited_count") || "6");
+    const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, maxCount);
+    if (entries.length === 0) return null;
+
+    const el = document.createElement("div");
+    el.className = "section";
+
+    const items = entries.map(([url, count]) => {
+      const d = data[url] || {};
+      const domain = d.domain || "";
+      const favicon = d.favicon || "";
+      const title = d.title || domain || url;
+      return `
+        <a class="link-card" href="${url}" target="_blank" rel="noopener">
+          <div class="link-icon">
+            <img src="${favicon}" alt=""
+              onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'emoji\\'>🔗</span>'">
+          </div>
+          <div class="link-text">
+            <div class="link-label">${title}</div>
+            <div class="link-domain">${domain}</div>
+          </div>
+          <span class="visit-count">${count}</span>
+        </a>`;
+    }).join("");
+
+    const collapseKey = "rd_collapsed_mest_besogte";
+    const isCollapsed = localStorage.getItem(collapseKey) === "1";
+    if (isCollapsed) el.classList.add("collapsed");
+
+    el.innerHTML = `
+      <div class="section-header">
+        <span class="section-chevron">▼</span>
+        <div class="section-title">${t("mostVisited")}</div>
+        <div class="section-count">${entries.length}</div>
+      </div>
+      <div class="link-grid-wrap">
+        <div class="link-grid">${items}</div>
+      </div>`;
+
+    el.querySelector(".section-header").addEventListener("click", () => {
+      const nowCollapsed = el.classList.toggle("collapsed");
+      localStorage.setItem(collapseKey, nowCollapsed ? "1" : "0");
+    });
+
+    return el;
+  }
+
+  // --- Raindrop API ---
+  async function rdFetch(path) {
+    const res = await fetch(`${API}${path}`, {
+      headers: { Authorization: `Bearer ${getToken()}` }
+    });
+    if (!res.ok) throw new Error(`API fejl: ${res.status} ${res.statusText}`);
+    return res.json();
+  }
+
+  async function loadLinks() {
+    const main = document.getElementById("main");
+    main.innerHTML = `<div class="status"><span class="spinner"></span> ${t("loading")}</div>`;
+
+    const token = getToken();
+    if (!token) {
+      main.innerHTML = `<div class="status">${t("noToken")}</div>`;
+      openSettings();
+      return;
+    }
+
+    try {
+      // Hent alle root-collections og child-collections
+      const [rootData, childData] = await Promise.all([
+        rdFetch("/collections"),
+        rdFetch("/collections/childrens")
+      ]);
+
+      const allCollections = [...(rootData.items || []), ...(childData.items || [])];
+      const parentName = getParentName();
+
+      // Find StartPage (eller hvad brugeren har navngivet det)
+      const parent = allCollections.find(c => c.title.toLowerCase() === parentName.toLowerCase());
+
+      if (!parent) {
+        main.innerHTML = `<div class="status error">${t("collectionNotFound", parentName)}</div>`;
+        return;
+      }
+
+      // Find alle child collections under StartPage — sorter efter Raindrop's sort-felt
+      const children = allCollections
+        .filter(c => c.parent && c.parent.$id === parent._id)
+        .sort((a, b) => a.sort - b.sort);
+
+      if (children.length === 0) {
+        main.innerHTML = `<div class="status error">${t("noChildCollections", parentName)}</div>`;
+        return;
+      }
+
+      // Hent raindrops for hvert barn parallelt — sort=-sort matcher drag-and-drop rækkefølge i Raindrop
+      const sectionsData = await Promise.all(
+        children.map(async col => {
+          const data = await rdFetch(`/raindrops/${col._id}?perpage=250&sort=-sort`);
+          return { title: col.title, items: data.items || [] };
+        })
+      );
+
+      renderSections(sectionsData);
+
+    } catch (err) {
+      console.error(err);
+      main.innerHTML = `<div class="status error">${t("apiError", err.message)}</div>`;
+    }
+  }
+
+  // --- Render ---
+  function cleanTitle(title, domain) {
+    if (!title) return domain;
+    // Fjern alt efter " | " eller " - " (typisk sitenavn i titler)
+    return title.split(/\s[\|\-–]\s/)[0].trim();
+  }
+
+  function getDomain(url) {
+    try { return new URL(url).hostname.replace("www.", ""); }
+    catch { return ""; }
+  }
+
+  function getFaviconUrl(url) {
+    try {
+      const origin = new URL(url).origin;
+      return `https://www.google.com/s2/favicons?sz=32&domain=${origin}`;
+    } catch { return ""; }
+  }
+
+  function renderSections(sections) {
+    const main = document.getElementById("main");
+    main.innerHTML = "";
+
+    const mostVisited = renderMostVisited();
+    if (mostVisited) main.appendChild(mostVisited);
+
+    const hidden = getHiddenSections();
+
+    sections.forEach(section => {
+      if (hidden.includes(section.title)) return;
+
+      const el = document.createElement("div");
+      el.className = "section";
+
+      const items = section.items.map(item => {
+        const domain = getDomain(item.link);
+        const favicon = item.domain
+          ? `https://www.google.com/s2/favicons?sz=32&domain=${item.domain}`
+          : getFaviconUrl(item.link);
+
+        return `
+          <a class="link-card" href="${item.link}" target="_blank" rel="noopener">
+            <div class="link-icon">
+              <img src="${favicon}" alt=""
+                onerror="this.style.display='none';this.parentElement.innerHTML='<span class=\\'emoji\\'>🔗</span>'">
+            </div>
+            <div class="link-text">
+              <div class="link-label">${cleanTitle(item.title, domain)}</div>
+              <div class="link-domain">${domain}</div>
+            </div>
+          </a>
+        `;
+      }).join("");
+
+      const collapseKey = `rd_collapsed_${section.title}`;
+      const isCollapsed = localStorage.getItem(collapseKey) === "1";
+      if (isCollapsed) el.classList.add("collapsed");
+
+      el.innerHTML = `
+        <div class="section-header">
+          <span class="section-chevron">▼</span>
+          <div class="section-title">${section.title}</div>
+          <div class="section-count">${section.items.length}</div>
+          <button class="section-hide-btn" title="Skjul sektion">✕</button>
+        </div>
+        <div class="link-grid-wrap">
+          <div class="link-grid">${items || `<div class="link-card" style="color:#64748b;border-style:dashed">${t("emptyCollection")}</div>`}</div>
+        </div>
+      `;
+
+      el.querySelector(".section-header").addEventListener("click", e => {
+        if (e.target.classList.contains("section-hide-btn")) return;
+        const nowCollapsed = el.classList.toggle("collapsed");
+        localStorage.setItem(collapseKey, nowCollapsed ? "1" : "0");
+      });
+
+      el.querySelector(".section-hide-btn").addEventListener("click", () => {
+        hideSection(section.title);
+        el.remove();
+        showToast(`${t("toastHidden", section.title)} — <u style="cursor:pointer" id="undoHide">${t("toastUndo")}</u>`);
+        setTimeout(() => {
+          document.getElementById("undoHide")?.addEventListener("click", () => {
+            unhideSection(section.title);
+            loadLinks();
+          });
+        }, 50);
+      });
+
+      main.appendChild(el);
+    });
+
+    // Tidsstempler for opdatering
+    const ts = document.createElement("div");
+    ts.style.cssText = "text-align:center;margin-top:48px;font-size:11px;color:var(--text-muted);opacity:0.5;";
+    ts.textContent = t("lastUpdated", new Date().toLocaleTimeString(t("dateLocale")));
+    main.appendChild(ts);
+  }
+
+  // --- Init ---
+  applyLanguage();
+  loadLinks();
+</script>
+
+</body>
+</html>
