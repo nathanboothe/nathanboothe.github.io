@@ -1560,7 +1560,7 @@
     }).join("");
 
     const collapseKey = "rd_collapsed_mest_besogte";
-    const isCollapsed = localStorage.getItem(collapseKey) === "1";
+    const isCollapsed = localStorage.getItem(collapseKey) !== "0"; // default: closed
     if (isCollapsed) el.classList.add("collapsed");
 
     el.innerHTML = `
@@ -1714,7 +1714,7 @@
       : "";
 
     const collapseKey = `rd_collapsed_${node.id}`;
-    const isCollapsed = localStorage.getItem(collapseKey) === "1";
+    const isCollapsed = localStorage.getItem(collapseKey) !== "0"; // default: closed
     if (isCollapsed) el.classList.add("collapsed");
 
     el.innerHTML = `
